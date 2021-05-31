@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\User;
 use App\Blog;
+use App\Comment;
+use DB;
 
 class BlogController extends Controller
 {
@@ -45,7 +47,16 @@ class BlogController extends Controller
      */
     public function storeimg(Request $request)
     {
-        $imagePath = request('img')->store('uploads','public');
+        $imgurl = request('upload')->store('uploads','s3');
+        $function_number = $request['CKEditorFuncNum'];
+        $message = '';
+        $url = "http://104.198.5.191/storage/$imgurl";
+        return "<script type='text/javascript'>window.parent.CKEDITOR.tools.callFunction($function_number, '$url', '$message');</script>";
+    }
+
+    public function img(Request $request)
+    {
+        $imagePath = request('img')->store('uploads','s3');
 
         return response()->json(
         [
@@ -57,7 +68,9 @@ class BlogController extends Controller
     {
         $validatedData = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
+            'intro' => ['required', 'string', 'max:255'],
+            'img' => ['required'],
+            'content' => ['required', 'string'],
             'category' => ['required', 'string', 'max:255'],
         ]);
 
@@ -66,7 +79,10 @@ class BlogController extends Controller
         $blog = new Blog;
         $blog -> user_id = $id;
         $blog -> title = $request['title'];
-        $blog -> description = $request['description'];
+        $blog -> intro = $request['intro'];
+        $imagePath = request('img')->store('uploads','s3');
+        $blog -> img = $imagePath;
+        $blog -> content = $request['content'];
         $blog -> category = $request['category'];
 
         $blog->save();
@@ -88,9 +104,23 @@ class BlogController extends Controller
         $user_id = auth()->user()->id;
         $user = User::find($user_id);
         $blog = Blog::find($id);
-        $my_comments = Comments::where('user_id', '=', $user_id)->where('blog_id','=',$id)->get();
-        // $comments = Comments::where('user_id', '!=', $user_id)->orWhereNull('user_id')->get();
-        $others_comments = Comments::where('user_id', '!=', $user_id)->where('blog_id','=',$id)->get();
+        //$my_comments = Comment::where('user_id', '=', $user_id)->where('blog_id','=',$id)->get();
+        // $comments = Comment::where('user_id', '!=', $user_id)->orWhereNull('user_id')->get();
+        //$others_comments = Comment::where('user_id', '!=', $user_id)->where('blog_id','=',$id)->get();
+
+	$my_comments = DB::table('comments')
+        ->join('users', 'comments.user_id', '=', 'users.id')
+        ->where('comments.blog_id',$id)
+        ->select('comments.id','comments.comment','comments.created_at','users.name','users.img')
+        ->orderBy('id', 'DESC')
+        ->get();
+
+        $others_comments = DB::table('comments')
+        ->join('users', 'comments.user_id', '=', 'users.id')
+        ->where('comments.blog_id','!=',$id)
+        ->select('comments.id','comments.comment','comments.created_at','users.name','users.img')
+        ->orderBy('id', 'DESC')
+        ->get();
 
         return response()->json(
             [
@@ -131,15 +161,23 @@ class BlogController extends Controller
     {
         $validatedData = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
+            'intro' => ['required', 'string', 'max:255'],
+            'content' => ['required', 'string'],
             'category' => ['required', 'string', 'max:255'],
         ]);
         $blog = Blog::find($id);
         $blog -> title = $request['title'];
-        $blog -> description = $request['description'];
+        $blog -> intro = $request['intro'];
+        $blog -> content = $request['content'];
         $blog -> category = $request['category'];
-        $blog->save();
-
+        if ($request->hasFile('img')) {
+            $imagePath = request('img')->store('uploads','s3');
+            $blog -> img = $imagePath;
+            $blog->save();
+        }
+        else{
+            $blog->save();
+        }
 
         return response()->json(
         [
@@ -164,3 +202,4 @@ class BlogController extends Controller
         ]);
     }
 }
+

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\User;
 use App\Blog;
+use App\Comment;
 
 class CommentController extends Controller
 {

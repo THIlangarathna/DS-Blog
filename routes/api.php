@@ -22,7 +22,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::middleware('auth:api')->get('/Blog', 'Api\BlogController@index');
 
 // Store image
-Route::middleware('auth:api')->post('/Img', 'Api\BlogController@storeimg');
+Route::post('/StoreImg', 'Api\BlogController@storeimg')->name('StoreImg');
 
 // Store Blog
 Route::middleware('auth:api')->post('/Blog', 'Api\BlogController@store');
@@ -34,7 +34,7 @@ Route::middleware('auth:api')->get('/Blog{id}','Api\BlogController@edit');
 Route::middleware('auth:api')->put('/Blog/{id}','Api\BlogController@update');
 
 // Show Blog
-Route::middleware('auth:api')->get('/Blogs{id}', 'Api\BlogController@show');
+Route::middleware('auth:api')->get('/ShowBlog{id}', 'Api\BlogController@show');
 
 //Delete Blog
 Route::middleware('auth:api')->delete('/Blog/{id}', 'Api\BlogController@destroy');
@@ -48,3 +48,4 @@ Route::middleware('auth:api')->put('/Comment/{id}','Api\CommentController@update
 //Delete Comment
 Route::middleware('auth:api')->delete('/Comment/{id}', 'Api\CommentController@destroy');
 
+Route::post('/Img', 'Api\BlogController@img')->name('Img');
