@@ -28,6 +28,19 @@ class BlogController extends Controller
             'blogs' => $blogs,
             ]);
     }
+    public function all()
+    {
+        $blogs = DB::table('blogs')
+        ->join('users', 'blogs.user_id', '=', 'users.id')
+        ->select('blogs.id','blogs.title','blogs.img','blogs.intro','blogs.category','blogs.created_at','users.name')
+        ->orderBy('blogs.id', 'DESC')
+        ->get();
+
+        return response()->json(
+            [
+            'blogs' => $blogs,
+            ]);
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -50,7 +63,7 @@ class BlogController extends Controller
         $imgurl = request('upload')->store('uploads','s3');
         $function_number = $request['CKEditorFuncNum'];
         $message = '';
-        $url = "http://104.198.5.191/storage/$imgurl";
+        $url = "https://ds-bucket-final.s3.ap-south-1.amazonaws.com/$imgurl";
         return "<script type='text/javascript'>window.parent.CKEDITOR.tools.callFunction($function_number, '$url', '$message');</script>";
     }
 
@@ -111,13 +124,15 @@ class BlogController extends Controller
 	$my_comments = DB::table('comments')
         ->join('users', 'comments.user_id', '=', 'users.id')
         ->where('comments.blog_id',$id)
+        ->where('comments.user_id',$user_id)
         ->select('comments.id','comments.comment','comments.created_at','users.name','users.img')
         ->orderBy('id', 'DESC')
         ->get();
 
         $others_comments = DB::table('comments')
         ->join('users', 'comments.user_id', '=', 'users.id')
-        ->where('comments.blog_id','!=',$id)
+        ->where('comments.blog_id',$id)
+        ->where('comments.user_id','!=',$user_id)
         ->select('comments.id','comments.comment','comments.created_at','users.name','users.img')
         ->orderBy('id', 'DESC')
         ->get();
@@ -200,6 +215,39 @@ class BlogController extends Controller
         [
         'Status'=> 'Blog Deleted!',
         ]);
+    }
+    public function home()
+    {
+        $blogs = DB::table('blogs')
+        ->join('users', 'blogs.user_id', '=', 'users.id')
+        ->select('blogs.id','blogs.title','blogs.img','blogs.intro','blogs.category','blogs.created_at','users.name')
+        ->orderBy('blogs.id', 'DESC')
+        ->limit(4)
+        ->get();
+
+        return response()->json(
+            [
+            'blogs' => $blogs,
+            ]);
+    }
+    public function showblog($id)
+    {
+        $blog = Blog::find($id);
+        $user_id = $blog->user_id;
+        $user = User::find($user_id);
+        $comments = DB::table('comments')
+	->join('users', 'comments.user_id', '=', 'users.id')
+        ->where('comments.blog_id','=',$id)
+        ->select('comments.id','comments.comment','comments.created_at','users.name','users.img')
+        ->orderBy('id', 'DESC')
+        ->get();
+
+        return response()->json(
+            [
+            'user' => $user,
+            'blog' => $blog,
+            'comments' => $comments,
+            ]);
     }
 }
 

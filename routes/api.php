@@ -49,3 +49,12 @@ Route::middleware('auth:api')->put('/Comment/{id}','Api\CommentController@update
 Route::middleware('auth:api')->delete('/Comment/{id}', 'Api\CommentController@destroy');
 
 Route::post('/Img', 'Api\BlogController@img')->name('Img');
+
+//Home
+Route::get('/home','Api\BlogController@home');
+
+//All Blogs
+Route::get('/blogs','Api\BlogController@all');
+
+// Show Blog
+Route::get('/BlogGuestShow/{id}', 'Api\BlogController@showblog');
